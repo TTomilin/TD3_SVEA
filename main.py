@@ -109,13 +109,11 @@ if __name__ == "__main__":
     np.random.seed(args.seed)
 
     obs_shape = env.observation_space.shape
-    state_dim = obs_shape[0]
     action_dim = env.action_space.shape[0]
     max_action = float(env.action_space.high[0])
 
     kwargs = {
         "obs_shape": obs_shape,
-        "state_dim": state_dim,
         "action_dim": action_dim,
         "max_action": max_action,
         "discount": args.discount,
@@ -128,14 +126,16 @@ if __name__ == "__main__":
         "alpha": args.alpha
     }
 
-    # Initialize policy
-    agent = TD3_BC.TD3_BC(**kwargs)
+    # Initialize or load policy
+    if args.load_model:
+        model_names = next(os.walk(model_dir), (None, None, []))[2]
+        latest_model = sorted(model_names)[-1]
+        agent = torch.load(os.path.join(model_dir, latest_model))
+    else:
+        agent = TD3_BC.TD3_BC(**kwargs)
 
     # Initialize WandB
     init_wandb(args)
-
-    if args.load_model:  # TODO implement
-        agent.load(f"{root_dir}/models/{env_name}")
 
     replay_dir = f'{root_dir}/replay/{env_name}'
     print('Replay directory', replay_dir)

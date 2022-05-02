@@ -69,7 +69,6 @@ class TD3_BC(object):
     def __init__(
             self,
             obs_shape,
-            state_dim,
             action_dim,
             max_action,
             hidden_dim=256,
