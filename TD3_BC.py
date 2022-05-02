@@ -55,7 +55,8 @@ class Critic(nn.Module):
         q2 = self.l6(q2)
         return q1, q2
 
-    def Q1(self, state, action):
+    def Q1(self, state, action, detach=False):
+        state = self.encoder(state, detach)
         sa = torch.cat([state, action], 1)
 
         q1 = F.relu(self.l1(sa))
