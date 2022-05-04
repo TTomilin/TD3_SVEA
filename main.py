@@ -161,6 +161,8 @@ if __name__ == "__main__":
 
     replay_dir = f'{root_dir}/replay/{env_name}'
     print('Replay directory', replay_dir)
+    print('Work directory', work_dir)
+
     assert os.path.exists(replay_dir)
     with open(f'{replay_dir}/data.json', 'r') as data_file:
         dataset = json.load(data_file)

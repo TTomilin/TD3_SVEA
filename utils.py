@@ -59,8 +59,10 @@ class ReplayBuffer(object):
         return obs, actions, rewards, next_obs, not_dones
 
     def normalize_states(self, eps=1e-3):
-        mean = self.states.mean(0, keepdims=True)
-        std = self.states.std(0, keepdims=True) + eps
+        # mean = self.states.mean(0, keepdims=True)
+        # std = self.states.std(0, keepdims=True) + eps
+        mean = self.states.mean()
+        std = self.states.std() + eps
         self.states = (self.states - mean) / std
         self.next_states = (self.next_states - mean) / std
         return mean, std
