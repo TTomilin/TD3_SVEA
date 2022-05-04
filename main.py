@@ -66,7 +66,7 @@ if __name__ == "__main__":
     parser.add_argument("--policy_freq", default=2, type=int)       # Frequency of delayed policy updates
     # TD3 + BC
     parser.add_argument("--alpha", default=2.5)
-    parser.add_argument("--normalize", default=True)
+    parser.add_argument("--normalize", default=True, type=bool)
     # Weights and Biases experiment monitoring
     parser.add_argument('--with_wandb', default=True, action='store_true', help='Enables Weights and Biases integration')
     parser.add_argument('--wandb_user', default=None, type=str, help='WandB username (entity). Must be specified from command line! Also see https://docs.wandb.ai/quickstart#1.-set-up-wandb')
