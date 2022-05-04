@@ -40,9 +40,23 @@ def make_env(
     # env = FrameStack(env, frame_stack)
     # if not is_distracting_cs:
     # 	env = ColorWrapper(env, mode, seed)
-
+    env = ScaleWrapper(env, mode, seed)
     return env
 
+class ScaleWrapper(gym.Wrapper):
+    """Wrapper for the color experiments"""
+
+    def __init__(self, env, mode, seed=None):
+        # assert isinstance(env, FrameStack), 'wrapped env must be a framestack'
+        gym.Wrapper.__init__(self, env)
+
+    def reset(self):
+        self.time_step = 0
+
+        return self.env.reset() /255. * 2 -1
+
+    def step(self, action):
+        return self.env.reset() /255. * 2 -1
 
 class ColorWrapper(gym.Wrapper):
     """Wrapper for the color experiments"""
