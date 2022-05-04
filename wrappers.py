@@ -56,7 +56,9 @@ class ScaleWrapper(gym.Wrapper):
         return self.env.reset() /255. * 2 -1
 
     def step(self, action):
-        return self.env.reset() /255. * 2 -1
+        obs, reward, done, _ = self.env.step(action)
+        obs = obs /255. * 2 -1
+        return obs, reward, done, _
 
 class ColorWrapper(gym.Wrapper):
     """Wrapper for the color experiments"""
