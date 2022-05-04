@@ -81,7 +81,8 @@ class TD3_BC(object):
             num_filters=32,
             num_shared_layers=11,
             num_head_layers=0,
-            projection_dim=100
+            projection_dim=100,
+            lr = 3e-4
     ):
 
         shared_cnn = m.SharedCNN(obs_shape, num_shared_layers, num_filters).cuda()
@@ -99,11 +100,11 @@ class TD3_BC(object):
 
         self.actor = Actor(actor_encoder, action_dim, hidden_dim, max_action).to(device)
         self.actor_target = copy.deepcopy(self.actor)
-        self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=3e-4)
+        self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=lr)
 
         self.critic = Critic(critic_encoder, action_dim, hidden_dim).to(device)
         self.critic_target = copy.deepcopy(self.critic)
-        self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=3e-4)
+        self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=lr)
 
         self.max_action = max_action
         self.discount = discount

@@ -4,6 +4,7 @@ import time
 import cv2
 import numpy as np
 import torch
+import logging
 
 import augmentations
 
@@ -26,8 +27,8 @@ class ReplayBuffer(object):
             not_dones = np.ones(N - 1)
             not_dones[N - 2] = 0.0
             for i in range(N - 1):
-                obs.append(load_image(os.path.join(data_path, episode[i]['img_path']), image_size))
-                next_obs.append(load_image(os.path.join(data_path, episode[i + 1]['img_path']), image_size))
+                obs.append(load_image(os.path.join(data_path, episode[i]['img_path']), image_size)/255.*2 -1)
+                next_obs.append(load_image(os.path.join(data_path, episode[i + 1]['img_path']), image_size)/255.*2 -1)
                 actions.append(episode[i]['action'])
                 rewards.append(episode[i]['reward'])
             self.states.extend(obs)
@@ -75,6 +76,18 @@ def ensure_dir_exists(path):
     if not os.path.exists(path):
         os.makedirs(path)
     return path
+
+def setup_logger(logger_name, log_file, level=logging.INFO):
+    l = logging.getLogger(logger_name)
+    formatter = logging.Formatter('%(asctime)s : %(message)s')
+    fileHandler = logging.FileHandler(log_file, mode='w')
+    fileHandler.setFormatter(formatter)
+    streamHandler = logging.StreamHandler()
+    streamHandler.setFormatter(formatter)
+
+    l.setLevel(level)
+    l.addHandler(fileHandler)
+    l.addHandler(streamHandler)
 
 
 def retry(times, exceptions):

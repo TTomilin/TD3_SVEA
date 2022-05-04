@@ -3,6 +3,7 @@ import json
 import os
 import pathlib
 import time
+from datetime import datetime
 
 import numpy as np
 import torch
@@ -13,7 +14,8 @@ import utils
 from video import VideoRecorder
 from wandb_utils import init_wandb
 from wrappers import make_env
-
+from utils import setup_logger
+import logging
 
 def evaluate(env, agent, video, num_episodes, step):
     episode_rewards = []
@@ -73,6 +75,10 @@ if __name__ == "__main__":
     parser.add_argument('--wandb_job_type', default='default', type=str, help='WandB job type')
     parser.add_argument('--wandb_tags', default=[], type=str, nargs='*', help='Tags can help with finding experiments in WandB web console')
     parser.add_argument('--wandb_key', default=None, type=str, help='API key for authorizing WandB')
+
+
+    parser.add_argument("--lr", default=3e-4, type=float)
+
     args = parser.parse_args()
 
     env_name = f'{args.domain_name}_{args.task_name}_{args.replay_episodes}{args.name_suffix}'
@@ -87,8 +93,11 @@ if __name__ == "__main__":
     # Create root directory
     root_dir = pathlib.Path(__file__).parent.resolve()
     print('Root directory', root_dir)
+    current_time = datetime.now().strftime('%b%d_%H-%M')
 
-    work_dir = f'{root_dir}/experiments/{env_name}/{args.seed}/'
+
+
+    work_dir = f'{root_dir}/experiments/{env_name}/{args.seed}/{current_time}'
     print('Experiment directory', env_name)
 
     summary_dir = utils.ensure_dir_exists(f"{work_dir}/summary")
@@ -97,6 +106,16 @@ if __name__ == "__main__":
 
     video = VideoRecorder(video_dir if args.save_video else None)
     writer = SummaryWriter(summary_dir, flush_secs=20)
+
+    log = {}
+    setup_logger('{}_log'.format(env_name),
+                 r'{0}/logger'.format(work_dir))
+    log['{}_log'.format(env_name)] = logging.getLogger(
+        '{}_log'.format(env_name))
+    d_args = vars(args)
+    for k in d_args.keys():
+        log['{}_log'.format(env_name)].info('{0}: {1}'.format(k, d_args[k]))
+
 
     print("---------------------------------------")
     print(f"Env: {env_name}, Seed: {args.seed}")
@@ -123,7 +142,10 @@ if __name__ == "__main__":
         "noise_clip": args.noise_clip * max_action,
         "policy_freq": args.policy_freq,
         # TD3 + BC
-        "alpha": args.alpha
+        "alpha": args.alpha,
+
+        # add by Reed
+        "lr": args.lr
     }
 
     # Initialize or load policy
@@ -135,7 +157,7 @@ if __name__ == "__main__":
         agent = TD3_BC.TD3_BC(**kwargs)
 
     # Initialize WandB
-    init_wandb(args)
+    # init_wandb(args)
 
     replay_dir = f'{root_dir}/replay/{env_name}'
     print('Replay directory', replay_dir)
@@ -150,12 +172,18 @@ if __name__ == "__main__":
     for step in range(int(args.train_steps) + 1):
         # Evaluate agent periodically
         if not step % args.eval_freq:
-            print("---------------------------------------")
-            print(f'Evaluating step {step} for {args.eval_episodes} episodes')
+            # print("---------------------------------------")
+            # print(f'Evaluating step {step} for {args.eval_episodes} episodes')
             avg_reward = evaluate(env, agent, video, args.eval_episodes, step)
             writer.add_scalar(f'eval/reward', avg_reward, step)
-            print(f"Evaluation reward: {avg_reward:.3f}")
-            print("---------------------------------------")
+            # print(f"Evaluation reward: {avg_reward:.3f}")
+            log['{}_log'.format(env_name)].info(
+                        "Time {0}, Evaluating step {1} for {2} episodes, ave reward {3:.3f}".
+                        format(
+                            time.strftime("%Hh %Mm %Ss",
+                                        time.gmtime(time.time() - experiment_start)), step, args.eval_episodes, avg_reward))
+
+            # print("---------------------------------------")
 
         # Save agent periodically
         if not step % args.save_freq:
