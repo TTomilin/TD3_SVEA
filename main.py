@@ -17,7 +17,7 @@ from wrappers import make_env
 from utils import setup_logger
 import logging
 
-def evaluate(env, agent, video, num_episodes, step):
+def evaluate(env, agent, video, num_episodes, step, mean, std):
     episode_rewards = []
     for episode in range(num_episodes):
         obs = env.reset()
@@ -25,6 +25,7 @@ def evaluate(env, agent, video, num_episodes, step):
         done = False
         episode_reward = 0
         while not done:
+            obs = (obs - mean) / std
             action = agent.select_action(obs)
             obs, reward, done, _ = env.step(action)
             video.record(env)
@@ -176,7 +177,7 @@ if __name__ == "__main__":
         if not step % args.eval_freq:
             # print("---------------------------------------")
             # print(f'Evaluating step {step} for {args.eval_episodes} episodes')
-            avg_reward = evaluate(env, agent, video, args.eval_episodes, step)
+            avg_reward = evaluate(env, agent, video, args.eval_episodes, step, mean, std)
             writer.add_scalar(f'eval/reward', avg_reward, step)
             # print(f"Evaluation reward: {avg_reward:.3f}")
             log['{}_log'.format(env_name)].info(
