@@ -6,9 +6,10 @@ import math
 from functools import partial
 
 
-def _get_out_shape_cuda(in_shape, layers):
-	x = torch.randn(*in_shape).cuda().unsqueeze(0)
-	return layers(x).squeeze(0).shape
+# def _get_out_shape_cuda(in_shape, layers):
+# 	x = torch.randn(*in_shape).cuda().unsqueeze(0)
+# 	x = torch.randn(*in_shape).unsqueeze(0)
+# 	return layers(x).squeeze(0).shape
 
 
 def _get_out_shape(in_shape, layers):

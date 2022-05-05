@@ -25,7 +25,7 @@ class ReplayBuffer(object):
             actions = []
             rewards = []
             not_dones = np.ones(N - 1)
-            not_dones[N - 2] = 0.0
+            # not_dones[N - 2] = 0.0
             for i in range(N - 1):
                 obs.append(load_image(os.path.join(data_path, episode[i]['img_path']), image_size)/255.*2 -1)
                 next_obs.append(load_image(os.path.join(data_path, episode[i + 1]['img_path']), image_size)/255.*2 -1)
