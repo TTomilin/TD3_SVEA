@@ -6,7 +6,7 @@ import torch.nn.functional as F
 
 import modules as m
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 class Actor(nn.Module):
@@ -71,6 +71,7 @@ class TD3_BC(object):
             obs_shape,
             action_dim,
             max_action,
+            device, 
             hidden_dim=256,
             discount=0.99,
             tau=0.005,
@@ -82,11 +83,13 @@ class TD3_BC(object):
             num_shared_layers=11,
             num_head_layers=0,
             projection_dim=100,
-            lr = 3e-4
+            lr = 3e-4,
+        
     ):
+        self.device = device
 
-        shared_cnn = m.SharedCNN(obs_shape, num_shared_layers, num_filters).cuda()
-        head_cnn = m.HeadCNN(shared_cnn.out_shape, num_head_layers, num_filters).cuda()
+        shared_cnn = m.SharedCNN(obs_shape, num_shared_layers, num_filters).to(self.device)
+        head_cnn = m.HeadCNN(shared_cnn.out_shape, num_head_layers, num_filters).to(self.device)
         actor_encoder = m.Encoder(
             shared_cnn,
             head_cnn,
@@ -98,11 +101,11 @@ class TD3_BC(object):
             m.RLProjection(head_cnn.out_shape, projection_dim)
         )
 
-        self.actor = Actor(actor_encoder, action_dim, hidden_dim, max_action).to(device)
+        self.actor = Actor(actor_encoder, action_dim, hidden_dim, max_action).to(self.device)
         self.actor_target = copy.deepcopy(self.actor)
         self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=lr)
 
-        self.critic = Critic(critic_encoder, action_dim, hidden_dim).to(device)
+        self.critic = Critic(critic_encoder, action_dim, hidden_dim).to(self.device)
         self.critic_target = copy.deepcopy(self.critic)
         self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=lr)
 
@@ -117,7 +120,7 @@ class TD3_BC(object):
         self.total_it = 0
 
     def select_action(self, state):
-        state = torch.FloatTensor(state).unsqueeze(0).to(device)
+        state = torch.FloatTensor(state).unsqueeze(0).to(self.device)
         return self.actor(state).squeeze().cpu().data.numpy()
 
     def train(self, replay_buffer, writer, step, batch_size=256):
@@ -161,8 +164,12 @@ class TD3_BC(object):
             Q = self.critic.Q1(state, pi)
             lmbda = self.alpha / Q.abs().mean().detach()
 
-            actor_loss = -lmbda * Q.mean() + F.mse_loss(pi, action)
-            writer.add_scalar(f'train/actor_loss', critic_loss, step)
+            TD3_loss = -lmbda * Q.mean()
+            BC_loss = F.mse_loss(pi, action)
+            actor_loss = TD3_loss + BC_loss
+            writer.add_scalar(f'train/TD3_loss', TD3_loss, step)
+            writer.add_scalar(f'train/BC_loss', BC_loss, step)
+            writer.add_scalar(f'train/actor_loss', actor_loss, step)
 
             # Optimize the actor
             self.actor_optimizer.zero_grad()

@@ -37,32 +37,32 @@ def _load_places(batch_size=256, image_size=84, num_workers=16, use_val=False):
 	print('Loaded dataset from', data_dir)
 
 
-def _get_places_batch(batch_size):
-	global places_iter
-	try:
-		imgs, _ = next(places_iter)
-		if imgs.size(0) < batch_size:
-			places_iter = iter(places_dataloader)
-			imgs, _ = next(places_iter)
-	except StopIteration:
-		places_iter = iter(places_dataloader)
-		imgs, _ = next(places_iter)
-	return imgs.cuda()
+# def _get_places_batch(batch_size):
+# 	global places_iter
+# 	try:
+# 		imgs, _ = next(places_iter)
+# 		if imgs.size(0) < batch_size:
+# 			places_iter = iter(places_dataloader)
+# 			imgs, _ = next(places_iter)
+# 	except StopIteration:
+# 		places_iter = iter(places_dataloader)
+# 		imgs, _ = next(places_iter)
+# 	return imgs.cuda()
 
 
-def random_overlay(x, dataset='places365_standard'):
-	"""Randomly overlay an image from Places"""
-	global places_iter
-	alpha = 0.5
+# def random_overlay(x, dataset='places365_standard'):
+# 	"""Randomly overlay an image from Places"""
+# 	global places_iter
+# 	alpha = 0.5
 
-	if dataset == 'places365_standard':
-		if places_dataloader is None:
-			_load_places(batch_size=x.size(0), image_size=x.size(-1))
-		imgs = _get_places_batch(batch_size=x.size(0)).repeat(1, x.size(1)//3, 1, 1)
-	else:
-		raise NotImplementedError(f'overlay has not been implemented for dataset "{dataset}"')
+# 	if dataset == 'places365_standard':
+# 		if places_dataloader is None:
+# 			_load_places(batch_size=x.size(0), image_size=x.size(-1))
+# 		imgs = _get_places_batch(batch_size=x.size(0)).repeat(1, x.size(1)//3, 1, 1)
+# 	else:
+# 		raise NotImplementedError(f'overlay has not been implemented for dataset "{dataset}"')
 
-	return ((1-alpha)*(x/255.) + (alpha)*imgs)*255.
+# 	return ((1-alpha)*(x/255.) + (alpha)*imgs)*255.
 
 
 def random_conv(x):

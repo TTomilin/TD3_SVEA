@@ -79,6 +79,7 @@ if __name__ == "__main__":
 
 
     parser.add_argument("--lr", default=3e-4, type=float)
+    parser.add_argument("--gpu", default=0, type=int)
 
     args = parser.parse_args()
 
@@ -91,6 +92,7 @@ if __name__ == "__main__":
         image_size=args.image_size,
     )
 
+    device = torch.device('cuda:' + str(args.gpu))
     # Create root directory
     root_dir = pathlib.Path(__file__).parent.resolve()
     print('Root directory', root_dir)
@@ -146,7 +148,8 @@ if __name__ == "__main__":
         "alpha": args.alpha,
 
         # add by Reed
-        "lr": args.lr
+        "lr": args.lr,
+        "device": device
     }
 
     # Initialize or load policy
@@ -167,9 +170,12 @@ if __name__ == "__main__":
     assert os.path.exists(replay_dir)
     with open(f'{replay_dir}/data.json', 'r') as data_file:
         dataset = json.load(data_file)
-    replay_buffer = utils.ReplayBuffer(dataset, replay_dir, args.batch_size, args.image_size)
+    replay_buffer = utils.ReplayBuffer(dataset, replay_dir, args.batch_size, args.image_size, device)
 
-    mean, std = replay_buffer.normalize_states() if args.normalize else 0, 1
+    if args.normalize:
+        mean, std = replay_buffer.normalize_states()
+    else:
+        mean, std = 0, 1
 
     experiment_start = time.time()
     for step in range(int(args.train_steps) + 1):
@@ -178,6 +184,7 @@ if __name__ == "__main__":
             # print("---------------------------------------")
             # print(f'Evaluating step {step} for {args.eval_episodes} episodes')
             avg_reward = evaluate(env, agent, video, args.eval_episodes, step, mean, std)
+
             writer.add_scalar(f'eval/reward', avg_reward, step)
             # print(f"Evaluation reward: {avg_reward:.3f}")
             log['{}_log'.format(env_name)].info(

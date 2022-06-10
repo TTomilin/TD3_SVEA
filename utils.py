@@ -11,7 +11,7 @@ import augmentations
 
 class ReplayBuffer(object):
 
-    def __init__(self, dataset, data_path, batch_size, image_size):
+    def __init__(self, dataset, data_path, batch_size, image_size, device):
         N = len(dataset[0])
         self.batch_size = batch_size
         self.states = []
@@ -25,7 +25,7 @@ class ReplayBuffer(object):
             actions = []
             rewards = []
             not_dones = np.ones(N - 1)
-            not_dones[N - 2] = 0.0
+            # not_dones[N - 2] = 0.0
             for i in range(N - 1):
                 obs.append(load_image(os.path.join(data_path, episode[i]['img_path']), image_size)/255.*2 -1)
                 next_obs.append(load_image(os.path.join(data_path, episode[i + 1]['img_path']), image_size)/255.*2 -1)
@@ -43,15 +43,16 @@ class ReplayBuffer(object):
         self.rewards = np.expand_dims(self.rewards, axis=1)
         self.not_dones = np.expand_dims(self.not_dones, axis=1)
         self.size = len(self.states)
+        self.device = device
 
     def sample(self):
         idxs = np.random.randint(0, self.size, size=self.batch_size)
 
-        obs = torch.FloatTensor(self.states[idxs]).cuda().float()
-        next_obs = torch.FloatTensor(self.next_states[idxs]).cuda().float()
-        actions = torch.FloatTensor(self.actions[idxs]).cuda()
-        rewards = torch.FloatTensor(self.rewards[idxs]).cuda()
-        not_dones = torch.FloatTensor(self.not_dones[idxs]).cuda()
+        obs = torch.FloatTensor(self.states[idxs]).to(self.device).float()
+        next_obs = torch.FloatTensor(self.next_states[idxs]).to(self.device).float()
+        actions = torch.FloatTensor(self.actions[idxs]).to(self.device)
+        rewards = torch.FloatTensor(self.rewards[idxs]).to(self.device)
+        not_dones = torch.FloatTensor(self.not_dones[idxs]).to(self.device)
 
         obs = augmentations.random_crop(obs)
         next_obs = augmentations.random_crop(next_obs)
